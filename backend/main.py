@@ -1,55 +1,89 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import requests
+from typing import List
 
 app = FastAPI()
 
+# CORS configuration to allow Angular frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200", "*"],  # Allow local dev and Docker
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # In-memory storage
-logs = []
+threats = []
 rules = []
+alerts = []
 
 # Pydantic models
-class Log(BaseModel):
+class Threat(BaseModel):
+    id: str
     timestamp: str
     ip: str
-    event_type: str
+    event: str
 
 class Rule(BaseModel):
-    id: int
-    condition: str  # e.g., "ip == '192.168.1.1'"
+    id: str
+    condition: str
 
-# Mock logs endpoint
-@app.post("/logs")
-async def add_log(log: Log):
-    logs.append(log.dict())
-    return {"message": "Log added"}
+class Alert(BaseModel):
+    id: str
+    threat_id: str
+    rule_id: str
+    message: str
 
-# Rules endpoint
+# Endpoints
+@app.get("/threats", response_model=List[Threat])
+async def get_threats():
+    return threats
+
+@app.post("/threats")
+async def add_threat(threat: Threat, request: Request):
+    print(f"Received threat: {await request.json()}")  # Debug log
+    threats.append(threat)
+    check_rules(threat)
+    return threat
+
+@app.get("/rules", response_model=List[Rule])
+async def get_rules():
+    return rules
+
 @app.post("/rules")
-async def add_rule(rule: Rule):
-    rules.append(rule.dict())
-    return {"message": "Rule added"}
+async def add_rule(rule: Rule, request: Request):
+    print(f"Received rule: {await request.json()}")  # Debug log
+    rules.append(rule)
+    return rule
 
-# Threat detection endpoint
-@app.get("/detect")
-async def detect_threats():
-    threats = []
-    for log in logs:
-        for rule in rules:
-            if eval_rule(log, rule["condition"]):  # Simplified evaluation
-                threats.append({"log": log, "rule": rule})
-    return {"threats": threats}
+@app.get("/alerts", response_model=List[Alert])
+async def get_alerts():
+    return alerts
 
-# Groq API integration
-@app.post("/suggest-rule")
-async def suggest_rule(log: Log):
-    response = requests.post(
-        "https://api.groq.com/v1/endpoint",  # Replace with actual Groq endpoint
-        headers={"Authorization": f"Bearer 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"},
-        json={"prompt": f"Suggest a detection rule for log: {log.dict()}"}
-    )
-    return response.json()
+# Rule checking logic
+def check_rules(threat: Threat):
+    for rule in rules:
+        if "starts with" in rule.condition:
+            prefix = rule.condition.split("starts with")[1].strip()
+            if threat.ip.startswith(prefix):
+                alerts.append(Alert(
+                    id=f"alert-{len(alerts) + 1}",
+                    threat_id=threat.id,
+                    rule_id=rule.id,
+                    message=f"Threat {threat.id} matches rule {rule.id}"
+                ))
+        elif "contains" in rule.condition:
+            keyword = rule.condition.split("contains")[1].strip()
+            if keyword in threat.event:
+                alerts.append(Alert(
+                    id=f"alert-{len(alerts) + 1}",
+                    threat_id=threat.id,
+                    rule_id=rule.id,
+                    message=f"Threat {threat.id} matches rule {rule.id}"
+                ))
 
-def eval_rule(log, condition):
-    # Simplified rule evaluation (e.g., "ip == '192.168.1.1'")
-    return eval(condition.replace("ip", f"'{log['ip']}'"))
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

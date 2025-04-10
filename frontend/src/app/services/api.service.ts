@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private apiUrl = 'http://localhost:8000';
+  // Use Docker service name "backend" instead of localhost
+  private apiUrl = 'http://backend:8000';
 
   constructor(private http: HttpClient) {}
 
