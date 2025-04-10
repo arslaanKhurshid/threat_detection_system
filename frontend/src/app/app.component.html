@@ -1,0 +1,24 @@
+<h1>Threat Detection</h1>
+    <div>
+      <h2>Threats</h2>
+      <ul>
+        <li *ngFor="let threat of threats">{{ threat.ip }} - {{ threat.event }}</li>
+      </ul>
+      <input #threatIp placeholder="IP" />
+      <input #threatEvent placeholder="Event" />
+      <button (click)="addThreat(threatIp.value, threatEvent.value)">Add Threat</button>
+    </div>
+    <div>
+      <h2>Rules</h2>
+      <ul>
+        <li *ngFor="let rule of rules">{{ rule.condition }}</li>
+      </ul>
+      <input #ruleCondition placeholder="Condition" />
+      <button (click)="addRule(ruleCondition.value)">Add Rule</button>
+    </div>
+    <div>
+      <h2>Alerts</h2>
+      <ul>
+        <li *ngFor="let alert of alerts">{{ alert.message }}</li>
+      </ul>
+    </div>
