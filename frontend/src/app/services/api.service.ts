@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class ApiService {
   // Use Docker service name "backend" instead of localhost
-  private apiUrl = 'http://backend:8000';
+  private apiUrl = 'http://localhost:8000';
 
   constructor(private http: HttpClient) {}
 

@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from './services/api.service';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [FormsModule,CommonModule],
   template: `
     <h1>Threat Detection</h1>
     <div *ngIf="error" style="color: red">{{ error }}</div>
